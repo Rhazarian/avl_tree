@@ -111,13 +111,15 @@ avl_tree<T>::const_noconst_iterator<is_const_iterator>::const_noconst_iterator(a
 
 template<typename T>
 template<bool is_const_iterator>
-bool avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator==(avl_tree<T>::const_noconst_iterator<is_const_iterator> const& other) const noexcept {
+template<bool any_const_noconst>
+bool avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator==(avl_tree<T>::const_noconst_iterator<any_const_noconst> const& other) const noexcept {
     return ptr == other.ptr && tree == other.tree;
 }
 
 template<typename T>
 template<bool is_const_iterator>
-bool avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator!=(avl_tree<T>::const_noconst_iterator<is_const_iterator> const& other) const noexcept {
+template<bool any_const_noconst>
+bool avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator!=(avl_tree<T>::const_noconst_iterator<any_const_noconst> const& other) const noexcept {
     return !operator==(other);
 }
 

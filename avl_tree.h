@@ -36,8 +36,10 @@ private:
 
         const_noconst_iterator& operator=(const_noconst_iterator const& other) noexcept;
 
-        bool operator==(const_noconst_iterator const& other) const noexcept;
-        bool operator!=(const_noconst_iterator const& other) const noexcept;
+        template<bool any_const_noconst>
+        bool operator==(const_noconst_iterator<any_const_noconst> const& other) const noexcept;
+        template<bool any_const_noconst>
+        bool operator!=(const_noconst_iterator<any_const_noconst> const& other) const noexcept;
 
         typename const_noconst_iterator::reference operator* () const noexcept;
 
