@@ -32,6 +32,7 @@ private:
 
         friend struct avl_tree;
     public:
+        const_noconst_iterator();
         const_noconst_iterator(const_noconst_iterator<false> const& other) noexcept; // NOLINT
 
         const_noconst_iterator& operator=(const_noconst_iterator const& other) noexcept;

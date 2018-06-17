@@ -100,6 +100,10 @@ avl_tree<T>::~avl_tree() = default;
 
 template<typename T>
 template<bool is_const_iterator>
+avl_tree<T>::const_noconst_iterator<is_const_iterator>::const_noconst_iterator() = default;
+
+template<typename T>
+template<bool is_const_iterator>
 avl_tree<T>::const_noconst_iterator<is_const_iterator>::const_noconst_iterator(avl_tree const* tree, avl_tree<T>::avl_tree_node const* node) noexcept : tree(tree),
         ptr(node) { }
 
