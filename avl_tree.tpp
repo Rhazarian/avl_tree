@@ -1,7 +1,5 @@
 #include <algorithm>
 
-#include "avl_tree.h"
-
 template<typename T>
 avl_tree<T>::avl_tree_node::avl_tree_node(T const& value) : value(value), height(0), left(nullptr), right(nullptr) { }
 
@@ -186,6 +184,14 @@ typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>::refere
 {
     return ptr->value;
 }
+
+template<typename T>
+template<bool is_const_iterator>
+typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>::pointer avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator->() const noexcept
+{
+    return &ptr->value;
+}
+
 template<typename T>
 template<bool is_const_iterator>
 typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>& avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator=(
@@ -440,5 +446,3 @@ void swap(avl_tree<T>& lhs, avl_tree<T>& rhs) noexcept
 {
     lhs.swap(rhs);
 }
-
-#include "avl_tree.h"

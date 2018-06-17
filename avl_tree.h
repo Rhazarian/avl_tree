@@ -42,6 +42,7 @@ private:
         bool operator!=(const_noconst_iterator<any_const_noconst> const& other) const noexcept;
 
         typename const_noconst_iterator::reference operator* () const noexcept;
+        typename const_noconst_iterator::pointer operator-> () const noexcept;
 
         const_noconst_iterator& operator++();
         const_noconst_iterator operator++(int); // NOLINT
