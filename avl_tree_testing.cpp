@@ -194,6 +194,12 @@ TEST(correctness, copy_swap_assign) { // NOLINT
     }
 }
 
+TEST(correctness, empty_assign_empty) { // NOLINT
+    avl_tree<uint32_t> empty;
+    avl_tree<uint32_t> empty2 = empty;
+    EXPECT_EQ(true, empty2.empty());
+}
+
 TEST(correctness, insert_find_iterator) { // NOLINT
     constexpr size_t LOOP_COUNT = 50;
     for (size_t i = 0; i < LOOP_COUNT; ++i) {

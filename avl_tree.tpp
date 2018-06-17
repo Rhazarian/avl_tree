@@ -370,7 +370,7 @@ typename avl_tree<T>::node_ptr avl_tree<T>::copy_subtree(avl_tree<T>::node_ptr c
 
 template<typename T>
 avl_tree<T>::avl_tree(avl_tree const& other) : root(copy_subtree(other.root)) {
-    min = minimum(root).get();
+    min = root ? minimum(root).get() : nullptr;
 }
 
 template<typename T>
