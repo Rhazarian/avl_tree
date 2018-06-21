@@ -10,28 +10,27 @@ struct avl_tree {
 private:
     struct avl_tree_node;
     typedef std::shared_ptr<avl_tree_node> node_ptr;
-    struct cleaner_t;
+
+    struct cleaner_t {
+        avl_tree_node* fake_end;
+
+        explicit cleaner_t(avl_tree_node*) noexcept;
+
+        void operator()(avl_tree_node*) noexcept;
+    };
+
     struct avl_tree_node {
-        std::optional<T> value;
+        std::optional<T> value{};
         ptrdiff_t height = 0;
         node_ptr left = nullptr;
         node_ptr right = nullptr;
         avl_tree_node* parent = nullptr;
 
-        avl_tree_node();
-        avl_tree_node(T const&, avl_tree_node*);
-        avl_tree_node(T const&, ptrdiff_t, node_ptr const&, node_ptr const&, avl_tree_node*, cleaner_t const& cleaner);
+        avl_tree_node() noexcept;
+        avl_tree_node(T const&, avl_tree_node*) noexcept;
     };
 
     avl_tree_node fake_end_node{};
-
-    struct cleaner_t {
-        avl_tree_node* fake_end;
-
-        explicit cleaner_t(avl_tree_node*);
-
-        void operator()(avl_tree_node*);
-    };
 
     cleaner_t cleaner = cleaner_t(&fake_end_node);
 
@@ -74,32 +73,32 @@ public:
 
 private:
     static int cmp(std::optional<T> const&, std::optional<T> const&);
-    ptrdiff_t height(node_ptr) noexcept;
-    void fix_height(node_ptr) noexcept;
-    ptrdiff_t difference(node_ptr) noexcept;
-    node_ptr rr_rotation(node_ptr) noexcept;
-    node_ptr ll_rotation(node_ptr) noexcept;
-    node_ptr rl_rotation(node_ptr) noexcept;
-    node_ptr lr_rotation(node_ptr) noexcept;
+    static ptrdiff_t height(node_ptr) noexcept;
+    static void fix_height(node_ptr) noexcept;
+    static ptrdiff_t difference(node_ptr) noexcept;
+    static node_ptr rr_rotation(node_ptr) noexcept;
+    static node_ptr ll_rotation(node_ptr) noexcept;
+    static node_ptr rl_rotation(node_ptr) noexcept;
+    static node_ptr lr_rotation(node_ptr) noexcept;
+    static void balance(node_ptr&) noexcept;
     iterator find(T const&, avl_tree_node const*) const;
     std::pair<iterator, bool> insert(T const&, avl_tree_node*, node_ptr&);
+    static node_ptr minimum(node_ptr const&) noexcept;
+    static void remove_minimum(node_ptr&) noexcept;
     void remove(T const&, node_ptr&);
-    void balance(node_ptr&) noexcept;
-    node_ptr minimum(node_ptr const&) const noexcept;
-    node_ptr maximum(node_ptr const&) const noexcept;
-    void remove_minimum(node_ptr&) noexcept;
-    node_ptr copy_subtree(node_ptr const&, avl_tree_node*, avl_tree const*);
+    node_ptr copy_subtree(node_ptr const&, avl_tree_node*, avl_tree const&);
 
 public:
-    avl_tree();
+    avl_tree() noexcept;
     avl_tree(avl_tree const&);
     avl_tree& operator=(avl_tree const&);
     ~avl_tree();
-    std::pair<iterator, bool> insert(T const&);
-    iterator erase(const_iterator);
+
     iterator find(T const&) const;
     iterator lower_bound(T const&) const;
     iterator upper_bound(T const&) const;
+    std::pair<iterator, bool> insert(T const&);
+    iterator erase(const_iterator);
     bool empty() const noexcept;
     void clear() noexcept;
 
