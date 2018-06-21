@@ -194,9 +194,37 @@ TEST(correctness, copy_swap_assign) { // NOLINT
     }
 }
 
+TEST(correctness, iterators_swap_advance) { // NOLINT
+    avl_tree<uint32_t> tree1;
+    tree1.insert(1);
+    tree1.insert(2);
+    tree1.insert(3);
+    tree1.insert(4);
+    avl_tree<uint32_t> tree2;
+    tree2.insert(11);
+    tree2.insert(12);
+    tree2.insert(13);
+    tree2.insert(14);
+    tree2.insert(15);
+    auto beg1 = tree1.begin();
+    auto beg2 = tree2.begin();
+    swap(tree1, tree2);
+    EXPECT_EQ(1, *beg1++);
+    EXPECT_EQ(2, *beg1++);
+    EXPECT_EQ(3, *beg1++);
+    EXPECT_EQ(4, *beg1++);
+    EXPECT_EQ(tree2.end(), beg1);
+    EXPECT_EQ(11, *beg2++);
+    EXPECT_EQ(12, *beg2++);
+    EXPECT_EQ(13, *beg2++);
+    EXPECT_EQ(14, *beg2++);
+    EXPECT_EQ(15, *beg2++);
+    EXPECT_EQ(tree1.end(), beg2);
+}
+
 TEST(correctness, empty_assign_empty) { // NOLINT
     avl_tree<uint32_t> empty;
-    avl_tree<uint32_t> empty2 = empty;
+    avl_tree<uint32_t> empty2 = empty; // NOLINT
     EXPECT_EQ(true, empty2.empty());
 }
 
