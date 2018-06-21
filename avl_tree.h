@@ -3,58 +3,44 @@
 
 #include <cstddef>
 #include <memory>
-#include <optional>
 
 template<typename T>
 struct avl_tree {
 private:
     struct avl_tree_node;
     typedef std::shared_ptr<avl_tree_node> node_ptr;
-
-    struct cleaner_t {
-        avl_tree_node* fake_end;
-
-        explicit cleaner_t(avl_tree_node*) noexcept;
-
-        void operator()(avl_tree_node*) noexcept;
-    };
-
     struct avl_tree_node {
-        std::optional<T> value{};
-        ptrdiff_t height = 0;
-        node_ptr left = nullptr;
-        node_ptr right = nullptr;
-        avl_tree_node* parent = nullptr;
+        T value;
+        ptrdiff_t height;
+        node_ptr left;
+        node_ptr right;
+        avl_tree_node* parent;
 
-        avl_tree_node() noexcept;
-        avl_tree_node(T const&, avl_tree_node*) noexcept;
+        explicit avl_tree_node(T const& value);
     };
 
-    avl_tree_node fake_end_node{};
-
-    cleaner_t cleaner = cleaner_t(&fake_end_node);
-
-    node_ptr root = node_ptr(&fake_end_node, cleaner);
-    avl_tree_node const* min = root.get();
+    node_ptr root;
+    avl_tree_node const* min;
 
     template<bool is_const_iterator>
     struct const_noconst_iterator : std::iterator<std::bidirectional_iterator_tag, T, ptrdiff_t, T const*, T const&> {
     private:
-        avl_tree_node const* ptr = nullptr;
+        node_ptr const* root;
+        avl_tree_node const* ptr;
 
-        explicit const_noconst_iterator(avl_tree_node const*) noexcept;
+        const_noconst_iterator(node_ptr const* root, avl_tree_node const* node) noexcept;
 
         friend struct avl_tree;
     public:
         const_noconst_iterator();
-        const_noconst_iterator(const_noconst_iterator<false> const&) noexcept; // NOLINT
+        const_noconst_iterator(const_noconst_iterator<false> const& other) noexcept; // NOLINT
 
-        const_noconst_iterator& operator=(const_noconst_iterator const&) noexcept;
+        const_noconst_iterator& operator=(const_noconst_iterator const& other) noexcept;
 
         template<bool any_const_noconst>
-        bool operator==(const_noconst_iterator<any_const_noconst> const&) const noexcept;
+        bool operator==(const_noconst_iterator<any_const_noconst> const& other) const noexcept;
         template<bool any_const_noconst>
-        bool operator!=(const_noconst_iterator<any_const_noconst> const&) const noexcept;
+        bool operator!=(const_noconst_iterator<any_const_noconst> const& other) const noexcept;
 
         typename const_noconst_iterator::reference operator* () const noexcept;
         typename const_noconst_iterator::pointer operator-> () const noexcept;
@@ -72,7 +58,6 @@ public:
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 private:
-    static int cmp(std::optional<T> const&, std::optional<T> const&);
     static ptrdiff_t height(node_ptr) noexcept;
     static void fix_height(node_ptr) noexcept;
     static ptrdiff_t difference(node_ptr) noexcept;
@@ -80,25 +65,25 @@ private:
     static node_ptr ll_rotation(node_ptr) noexcept;
     static node_ptr rl_rotation(node_ptr) noexcept;
     static node_ptr lr_rotation(node_ptr) noexcept;
+    iterator find(node_ptr const&, T const&) const;
+    std::pair<iterator, bool> insert(node_ptr&, avl_tree_node*, T const&);
+    void remove(node_ptr&, T const&);
     static void balance(node_ptr&) noexcept;
-    iterator find(T const&, avl_tree_node const*) const;
-    std::pair<iterator, bool> insert(T const&, avl_tree_node*, node_ptr&);
     static node_ptr minimum(node_ptr const&) noexcept;
+    static node_ptr maximum(node_ptr const&) noexcept;
     static void remove_minimum(node_ptr&) noexcept;
-    void remove(T const&, node_ptr&);
-    node_ptr copy_subtree(node_ptr const&, avl_tree_node*, avl_tree const&);
+    node_ptr copy_subtree(node_ptr const&, avl_tree_node*);
 
 public:
     avl_tree() noexcept;
     avl_tree(avl_tree const&);
     avl_tree& operator=(avl_tree const&);
     ~avl_tree();
-
+    std::pair<iterator, bool> insert(T const&);
+    iterator erase(const_iterator);
     iterator find(T const&) const;
     iterator lower_bound(T const&) const;
     iterator upper_bound(T const&) const;
-    std::pair<iterator, bool> insert(T const&);
-    iterator erase(const_iterator);
     bool empty() const noexcept;
     void clear() noexcept;
 
