@@ -16,7 +16,7 @@ private:
         node_ptr right;
         avl_tree_node* parent;
 
-        explicit avl_tree_node(T const& value);
+        explicit avl_tree_node(T const& value, avl_tree_node*);
     };
 
     node_ptr root;
@@ -28,19 +28,19 @@ private:
         node_ptr const* root;
         avl_tree_node const* ptr;
 
-        const_noconst_iterator(node_ptr const* root, avl_tree_node const* node) noexcept;
+        const_noconst_iterator(node_ptr const*, avl_tree_node const*) noexcept;
 
         friend struct avl_tree;
     public:
         const_noconst_iterator();
-        const_noconst_iterator(const_noconst_iterator<false> const& other) noexcept; // NOLINT
+        const_noconst_iterator(const_noconst_iterator<false> const&) noexcept; // NOLINT
 
-        const_noconst_iterator& operator=(const_noconst_iterator const& other) noexcept;
+        const_noconst_iterator& operator=(const_noconst_iterator const&) noexcept;
 
         template<bool any_const_noconst>
-        bool operator==(const_noconst_iterator<any_const_noconst> const& other) const noexcept;
+        bool operator==(const_noconst_iterator<any_const_noconst> const&) const noexcept;
         template<bool any_const_noconst>
-        bool operator!=(const_noconst_iterator<any_const_noconst> const& other) const noexcept;
+        bool operator!=(const_noconst_iterator<any_const_noconst> const&) const noexcept;
 
         typename const_noconst_iterator::reference operator* () const noexcept;
         typename const_noconst_iterator::pointer operator-> () const noexcept;
@@ -65,25 +65,29 @@ private:
     static node_ptr ll_rotation(node_ptr) noexcept;
     static node_ptr rl_rotation(node_ptr) noexcept;
     static node_ptr lr_rotation(node_ptr) noexcept;
+    static void balance(node_ptr&) noexcept;
+    static node_ptr maximum(node_ptr const&) noexcept;
+    static node_ptr minimum(node_ptr const&) noexcept;
+    static void remove_minimum(node_ptr&) noexcept;
+
+    node_ptr copy_subtree(node_ptr const&, avl_tree_node*);
+
     iterator find(node_ptr const&, T const&) const;
     std::pair<iterator, bool> insert(node_ptr&, avl_tree_node*, T const&);
     void remove(node_ptr&, T const&);
-    static void balance(node_ptr&) noexcept;
-    static node_ptr minimum(node_ptr const&) noexcept;
-    static node_ptr maximum(node_ptr const&) noexcept;
-    static void remove_minimum(node_ptr&) noexcept;
-    node_ptr copy_subtree(node_ptr const&, avl_tree_node*);
+
 
 public:
     avl_tree() noexcept;
     avl_tree(avl_tree const&);
     avl_tree& operator=(avl_tree const&);
     ~avl_tree();
-    std::pair<iterator, bool> insert(T const&);
-    iterator erase(const_iterator);
+
     iterator find(T const&) const;
     iterator lower_bound(T const&) const;
     iterator upper_bound(T const&) const;
+    std::pair<iterator, bool> insert(T const&);
+    iterator erase(const_iterator);
     bool empty() const noexcept;
     void clear() noexcept;
 

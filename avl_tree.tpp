@@ -1,7 +1,7 @@
 #include <algorithm>
 
 template<typename T>
-avl_tree<T>::avl_tree_node::avl_tree_node(T const& value) : value(value), height(0), left(nullptr), right(nullptr) { }
+avl_tree<T>::avl_tree_node::avl_tree_node(T const& value, avl_tree_node* parent) : value(value), height(0), left(nullptr), right(nullptr), parent(parent) { }
 
 template<typename T>
 ptrdiff_t avl_tree<T>::height(node_ptr node) noexcept
@@ -239,8 +239,7 @@ template<typename T>
 std::pair<typename avl_tree<T>::iterator, bool> avl_tree<T>::insert(node_ptr& node, avl_tree_node* parent, T const& value)
 {
     if (node == nullptr) {
-        node.reset(new avl_tree_node(value));
-        node->parent = parent;
+        node.reset(new avl_tree_node(value, parent));
         return {iterator(&root, node.get()), true};
     }
     if (value == node->value) {
@@ -388,11 +387,10 @@ typename avl_tree<T>::node_ptr avl_tree<T>::copy_subtree(avl_tree<T>::node_ptr c
     if (node == nullptr) {
         return nullptr;
     }
-    node_ptr ptr(new avl_tree_node(node->value));
+    node_ptr ptr(new avl_tree_node(node->value, parent));
     ptr->height = node->height;
     ptr->left = copy_subtree(node->left, ptr.get());
     ptr->right = copy_subtree(node->right, ptr.get());
-    ptr->parent = parent;
     return ptr;
 }
 
