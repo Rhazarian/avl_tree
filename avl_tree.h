@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 
 template<typename T>
 struct avl_tree {
@@ -10,25 +11,26 @@ private:
     struct avl_tree_node;
     typedef std::shared_ptr<avl_tree_node> node_ptr;
     struct avl_tree_node {
-        T value;
-        ptrdiff_t height;
-        node_ptr left;
-        node_ptr right;
-        avl_tree_node* parent;
+        std::optional<T> value{};
+        ptrdiff_t height = 0;
+        node_ptr left = nullptr;
+        node_ptr right = nullptr;
+        avl_tree_node* parent = nullptr;
 
+        avl_tree_node() noexcept;
         explicit avl_tree_node(T const& value, avl_tree_node*);
     };
 
-    node_ptr root;
-    avl_tree_node const* min;
+    avl_tree_node fake_end_node{};
+    node_ptr& root = fake_end_node.left;
+    avl_tree_node const* min = root.get();
 
     template<bool is_const_iterator>
     struct const_noconst_iterator : std::iterator<std::bidirectional_iterator_tag, T, ptrdiff_t, T const*, T const&> {
     private:
-        node_ptr const* root;
         avl_tree_node const* ptr;
 
-        const_noconst_iterator(node_ptr const*, avl_tree_node const*) noexcept;
+        explicit const_noconst_iterator(avl_tree_node const*) noexcept;
 
         friend struct avl_tree;
     public:
@@ -58,6 +60,7 @@ public:
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 private:
+    static int cmp(std::optional<T> const&, std::optional<T> const&);
     static ptrdiff_t height(node_ptr) noexcept;
     static void fix_height(node_ptr) noexcept;
     static ptrdiff_t difference(node_ptr) noexcept;

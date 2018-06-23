@@ -1,7 +1,10 @@
 #include <algorithm>
 
 template<typename T>
-avl_tree<T>::avl_tree_node::avl_tree_node(T const& value, avl_tree_node* parent) : value(value), height(0), left(nullptr), right(nullptr), parent(parent) { }
+avl_tree<T>::avl_tree_node::avl_tree_node() noexcept { }
+
+template<typename T>
+avl_tree<T>::avl_tree_node::avl_tree_node(T const& value, avl_tree_node* parent) : value(value), parent(parent) { }
 
 template<typename T>
 ptrdiff_t avl_tree<T>::height(node_ptr node) noexcept
@@ -95,7 +98,7 @@ void avl_tree<T>::balance(node_ptr& node) noexcept
 }
 
 template<typename T>
-avl_tree<T>::avl_tree() noexcept : root(nullptr), min(nullptr) { }
+avl_tree<T>::avl_tree() noexcept { }
 
 template<typename T>
 avl_tree<T>::~avl_tree() = default;
@@ -106,18 +109,18 @@ avl_tree<T>::const_noconst_iterator<is_const_iterator>::const_noconst_iterator()
 
 template<typename T>
 template<bool is_const_iterator>
-avl_tree<T>::const_noconst_iterator<is_const_iterator>::const_noconst_iterator(node_ptr const* root, avl_tree<T>::avl_tree_node const* node) noexcept : root(root),
+avl_tree<T>::const_noconst_iterator<is_const_iterator>::const_noconst_iterator(avl_tree<T>::avl_tree_node const* node) noexcept :
         ptr(node) { }
 
 template<typename T>
 template<bool is_const_iterator>
-avl_tree<T>::const_noconst_iterator<is_const_iterator>::const_noconst_iterator(avl_tree<T>::const_noconst_iterator<false> const& other) noexcept : root(other.root), ptr(other.ptr) { }
+avl_tree<T>::const_noconst_iterator<is_const_iterator>::const_noconst_iterator(avl_tree<T>::const_noconst_iterator<false> const& other) noexcept : ptr(other.ptr) { }
 
 template<typename T>
 template<bool is_const_iterator>
 template<bool any_const_noconst>
 bool avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator==(avl_tree<T>::const_noconst_iterator<any_const_noconst> const& other) const noexcept {
-    return ptr == other.ptr && root == other.root;
+    return ptr == other.ptr;
 }
 
 template<typename T>
@@ -137,7 +140,7 @@ typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>& avl_tr
         }
     } else {
         avl_tree_node const* node = ptr->parent;
-        while (node && node->value < ptr->value) {
+        while (node && cmp(node->value, ptr->value) < 0) {
             ptr = node;
             node = ptr->parent;
         }
@@ -148,24 +151,22 @@ typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>& avl_tr
 
 template<typename T>
 template<bool is_const_iterator>
-typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>& avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator--() {
-    if (ptr != nullptr) {
-        if (ptr->left) {
-            ptr = ptr->left.get();
-            while (ptr->right) {
-                ptr = ptr->right.get();
-            }
-        } else {
-            avl_tree_node const* node = ptr->parent;
-            while (node && node->value > ptr->value) {
-                ptr = node;
-                node = ptr->parent;
-            }
-            ptr = node;
+typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>& avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator--()
+{
+    if (ptr->left) {
+        ptr = ptr->left.get();
+        while (ptr->right) {
+            ptr = ptr->right.get();
         }
     }
     else {
-        ptr = maximum(*root).get();
+        avl_tree_node const* node = ptr->parent;
+        while (node && cmp(node->value, ptr->value) > 0) {
+            ptr = node;
+            node = ptr->parent;
+        }
+        ptr = node;
+
     }
     return *this;
 }
@@ -190,14 +191,14 @@ template<typename T>
 template<bool is_const_iterator>
 typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>::reference avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator*() const noexcept
 {
-    return ptr->value;
+    return ptr->value.value();
 }
 
 template<typename T>
 template<bool is_const_iterator>
 typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>::pointer avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator->() const noexcept
 {
-    return &ptr->value;
+    return &ptr->value.value();
 }
 
 template<typename T>
@@ -205,7 +206,6 @@ template<bool is_const_iterator>
 typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>& avl_tree<T>::const_noconst_iterator<is_const_iterator>::operator=(
         const avl_tree<T>::const_noconst_iterator<is_const_iterator>& other) noexcept
 {
-    root = other.root;
     ptr = other.ptr;
     return *this;
 }
@@ -213,8 +213,12 @@ typename avl_tree<T>::template const_noconst_iterator<is_const_iterator>& avl_tr
 template<typename T>
 typename avl_tree<T>::iterator avl_tree<T>::find(node_ptr const& node, T const& value) const
 {
-    if (node == nullptr || node->value == value)
-        return iterator(&root, node.get());
+    if (node == nullptr) {
+        return iterator(&fake_end_node);
+    }
+    if (node->value == value) {
+        return iterator(node.get());
+    }
     return value < node->value ? find(node->left, value) : find(node->right, value);
 }
 
@@ -240,10 +244,10 @@ std::pair<typename avl_tree<T>::iterator, bool> avl_tree<T>::insert(node_ptr& no
 {
     if (node == nullptr) {
         node.reset(new avl_tree_node(value, parent));
-        return {iterator(&root, node.get()), true};
+        return {iterator(node.get()), true};
     }
     if (value == node->value) {
-        return {iterator(&root, node.get()), false};
+        return {iterator(node.get()), false};
     }
     if (value < node->value) {
         auto tmp = insert(node->left, node.get(), value);
@@ -261,11 +265,11 @@ template<typename T>
 std::pair<typename avl_tree<T>::iterator, bool> avl_tree<T>::insert(T const& value)
 {
     if (min == nullptr || value < min->value) {
-        auto tmp = insert(root, nullptr, value);
+        auto tmp = insert(root, &fake_end_node, value);
         min = tmp.first.ptr;
         return tmp;
     }
-    return insert(root, nullptr, value);
+    return insert(root, &fake_end_node, value);
 }
 
 template<typename T>
@@ -336,18 +340,18 @@ void avl_tree<T>::remove(avl_tree::node_ptr& node, T const& value)
 template<typename T>
 typename avl_tree<T>::iterator avl_tree<T>::erase(avl_tree<T>::const_iterator it) {
     avl_tree_node const* ptr = it.ptr;
-    iterator new_it(&root, (++it).ptr);
+    iterator new_it((++it).ptr);
     if (ptr == min) {
         min = new_it.ptr;
     }
-    remove(root, ptr->value);
+    remove(root, ptr->value.value());
     return new_it;
 }
 
 template<typename T>
 typename avl_tree<T>::iterator avl_tree<T>::lower_bound(T const& value) const {
     avl_tree_node const* node = root.get();
-    avl_tree_node const* successor = nullptr;
+    avl_tree_node const* successor = &fake_end_node;
     while (node != nullptr) {
         if (node->value >= value) {
             successor = node;
@@ -357,13 +361,13 @@ typename avl_tree<T>::iterator avl_tree<T>::lower_bound(T const& value) const {
             node = node->right.get();
         }
     }
-    return iterator(&root, successor);
+    return iterator(successor);
 }
 
 template<typename T>
 typename avl_tree<T>::iterator avl_tree<T>::upper_bound(T const& value) const {
     avl_tree_node const* node = root.get();
-    avl_tree_node const* successor = nullptr;
+    avl_tree_node const* successor = &fake_end_node;
     while (node != nullptr) {
         if (node->value > value) {
             successor = node;
@@ -373,12 +377,18 @@ typename avl_tree<T>::iterator avl_tree<T>::upper_bound(T const& value) const {
             node = node->right.get();
         }
     }
-    return iterator(&root, successor);
+    return iterator(successor);
 }
 
 template<typename T>
 void avl_tree<T>::swap(avl_tree& other) noexcept {
     root.swap(other.root);
+    if (root) {
+        root->parent = &fake_end_node;
+    }
+    if (other.root) {
+        other.root->parent = &other.fake_end_node;
+    }
     std::swap(min, other.min);
 }
 
@@ -387,7 +397,7 @@ typename avl_tree<T>::node_ptr avl_tree<T>::copy_subtree(avl_tree<T>::node_ptr c
     if (node == nullptr) {
         return nullptr;
     }
-    node_ptr ptr(new avl_tree_node(node->value, parent));
+    node_ptr ptr(new avl_tree_node(node->value.value(), parent));
     ptr->height = node->height;
     ptr->left = copy_subtree(node->left, ptr.get());
     ptr->right = copy_subtree(node->right, ptr.get());
@@ -395,7 +405,8 @@ typename avl_tree<T>::node_ptr avl_tree<T>::copy_subtree(avl_tree<T>::node_ptr c
 }
 
 template<typename T>
-avl_tree<T>::avl_tree(avl_tree const& other) : root(copy_subtree(other.root, nullptr)) {
+avl_tree<T>::avl_tree(avl_tree const& other) {
+    root = copy_subtree(other.root, &fake_end_node);
     min = root ? minimum(root).get() : nullptr;
 }
 
@@ -409,12 +420,12 @@ avl_tree<T>& avl_tree<T>::operator=(avl_tree const& other)
 
 template<typename T>
 typename avl_tree<T>::iterator avl_tree<T>::begin() noexcept {
-    return iterator(&root, min);
+    return min ? iterator(min) : end();
 }
 
 template<typename T>
 typename avl_tree<T>::const_iterator avl_tree<T>::cbegin() const noexcept {
-    return const_iterator(&root, min);
+    return min ? const_iterator(min) : end();
 }
 
 template<typename T>
@@ -424,12 +435,12 @@ typename avl_tree<T>::const_iterator avl_tree<T>::begin() const noexcept {
 
 template<typename T>
 typename avl_tree<T>::iterator avl_tree<T>::end() noexcept {
-    return iterator(&root, nullptr);
+    return iterator(&fake_end_node);
 }
 
 template<typename T>
 typename avl_tree<T>::const_iterator avl_tree<T>::cend() const noexcept {
-    return const_iterator(&root, nullptr);
+    return const_iterator(&fake_end_node);
 }
 
 template<typename T>
@@ -471,4 +482,15 @@ template<typename T>
 void swap(avl_tree<T>& lhs, avl_tree<T>& rhs) noexcept
 {
     lhs.swap(rhs);
+}
+
+template<typename T>
+int avl_tree<T>::cmp(std::optional<T> const& lhs, std::optional<T> const& rhs) {
+    if (!lhs.has_value()) {
+        return 1;
+    }
+    if (!rhs.has_value()) {
+        return -1;
+    }
+    return lhs.value() > rhs.value() ? 1 : (lhs.value() < rhs.value() ? -1 : 0);
 }
